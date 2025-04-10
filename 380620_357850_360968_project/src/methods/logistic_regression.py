@@ -55,7 +55,7 @@ class LogisticRegression(object):
         Returns:
             pred_labels (array): labels of shape (N,)
         """
-        softmaxed_data = self.f_softmax(test_data, self.weights)
+        softmaxed_data = self.f_softmax(test_data)
         return np.argmax(softmaxed_data, 1)
     
     def f_softmax(self, data):
