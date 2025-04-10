@@ -27,7 +27,7 @@ def main(args):
 
     # EXTRACTED FEATURES DATASET
     if args.data_type == "features":
-        feature_data = np.load("features.npz", allow_pickle=True)
+        feature_data = np.load("../Data_MS1_2025/features.npz", allow_pickle=True)
         xtrain, xtest = feature_data["xtrain"], feature_data["xtest"]
         ytrain, ytest = feature_data["ytrain"], feature_data["ytest"]
 
@@ -65,6 +65,9 @@ def main(args):
 
     elif args.method == "logistic_regression":
         method_obj = LogisticRegression(args.lr, args.max_iters)
+
+    elif args.method == "kmeans":
+        method_obj = KMeans(args.max_iters)
 
     s1 = time.time() #First time checkpoint
 
