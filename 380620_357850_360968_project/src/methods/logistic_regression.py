@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..utils import get_n_classes, label_to_onehot, onehot_to_label, accuracy_fn
+from ..utils import get_n_classes, label_to_onehot, accuracy_fn
 
 
 class LogisticRegression(object):
@@ -86,4 +86,4 @@ class LogisticRegression(object):
         Returns:
             grad (np.array): Gradients of shape (D, C)
         """
-        return data.T @ (self.f_softmax(data, self.weights) - labels)
+        return data.T @ (self.f_softmax(data) - labels)
