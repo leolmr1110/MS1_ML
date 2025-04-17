@@ -152,7 +152,7 @@ def main(args):
     acc = accuracy_fn(preds, ytest)
     macrof1 = macrof1_fn(preds, ytest)
     print(f"Predicting using {args.method} took {s3 - s2} seconds")
-    print(f"{"Test" if not args.test else "Validation"} set:  accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
+    print(f"{'Test' if not args.test else 'Validation'} set:  accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
 
     ### WRITE YOUR CODE HERE if you want to add other outputs, visualization, etc.
     
