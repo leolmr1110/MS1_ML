@@ -6,18 +6,19 @@ from .. import utils
 
 class KMeans(object):
     """
-    kNN classifier object.
+    kMeans classifier object.
     """
 
-    def __init__(self, max_iters=500):
+    def __init__(self, max_iters=500, centroids_init="random"):
         """
         Call set_arguments function of this class.
         """
         self.max_iters = max_iters
         self.centroids = None
-        self.best_permutation = None
+        self.centroids_init = centroids_init
 
-    def fit(self, training_data, training_labels):
+
+    def fit(self, training_data, training_labels, n_init=10):
         """
         Trains the model, returns predicted labels for training data.
         Hint:
@@ -30,29 +31,43 @@ class KMeans(object):
         Returns:
             pred_labels (np.array): labels of shape (N,)
         """
-        K = utils.get_n_classes(training_labels)
-        
-        self.centroids = self.init_centers_1(training_data, K)
+        K = utils.get_n_classes(training_labels) #number of clusters
+        best_inertia = np.inf
+        best_inertia_run = 0
+        generator = np.random.default_rng()
 
-        for i in range(self.max_iters):
-            if ((i+1) % 10 == 0):
-                print(f"Iteration {i+1}/{self.max_iters}...")
-            old_centers = self.centroids.copy()
+        # we do multiple random initializations and keep the one where the inertia is lowest 
+        # (i.e. the best in terms of the sum of square distances)
+        for run in range(1, n_init+1):
+            centroids = (
+                self.init_centers_kmeanspp(training_data, K, generator) if self.centroids_init == "kmeanspp" else 
+                self.init_centers_random(training_data, K, generator)
+            )
 
-            distances = self.compute_distance(training_data, self.centroids)
-            cluster_assignments = self.find_closest_cluster(distances)
-            self.centroids = self.compute_centers(training_data, cluster_assignments, K)
+            for i in range(self.max_iters):
+                old_centroids = centroids.copy()
+                distances = self.compute_distance(training_data, centroids)
+                cluster_assignments = self.find_closest_cluster(distances)
+                centroids = self.compute_centers(training_data, cluster_assignments, K)
 
-            if np.all(old_centers == self.centroids):
-                print(f"K-Means has converged after {i+1} iterations!")
-                break
-        
-        distances = self.compute_distance(training_data, self.centroids)
-        cluster_assignments = self.find_closest_cluster(distances)
+                if np.allclose(old_centroids, centroids, atol=1e-6):
+                    print(f"Run {run}: K-Means has converged after {i+1} iterations")
+                    break
+                
+                if (i == self.max_iters - 1):
+                    print(f"Run {run}: Max iterations reached")
 
-        self.centroid_labels = self.assign_labels_to_centers(self.centroids, cluster_assignments, training_labels.astype(int))
+            inertia = np.sum((training_data - centroids[cluster_assignments]) ** 2)
 
+            if inertia < best_inertia:
+                best_inertia = inertia
+                best_inertia_run = run
+                self.centroids = centroids
+                self.centroid_labels = self.assign_labels_to_centers(centroids, cluster_assignments, training_labels.astype(int))
+
+        print(f"The run with lowest inertia was number {best_inertia_run}")        
         return self.predict(training_data)
+
 
     def predict(self, test_data):
         """
@@ -69,7 +84,8 @@ class KMeans(object):
 
         return test_labels
     
-    def init_centers_1(self, data, K):
+
+    def init_centers_random(self, data, K, generator):
         """
         Randomly pick K data points from the data as initial cluster centers.
         
@@ -79,8 +95,31 @@ class KMeans(object):
         Returns:
             centers (np.array): initial cluster centers of shape (K,D)
         """
-        indices = np.random.permutation(data.shape[0])[:K]
+        indices = generator.permutation(data.shape[0])[:K]
         return data[indices]
+    
+
+    def init_centers_kmeanspp(self, data, K, generator):
+        """
+        Pick K data points from the data as initial cluster centers by taking points that have 
+        higher probability of being further away from each other.
+        
+        Arguments: 
+            data (np.array): data of shape (N,D)
+            K (int): number of clusters
+        Returns:
+            centers (np.array): initial cluster centers of shape (K,D)
+        """
+        centers = []
+        first_idx = generator.integers(0, data.shape[0])
+        centers.append(data[first_idx])
+
+        for _ in range(1, K):
+            distances = np.min(self.compute_distance(data, np.array(centers)), axis=1)
+            probs = distances / np.sum(distances)
+            next_center = data[np.random.choice(data.shape[0], p=probs)]
+            centers.append(next_center)
+        return np.array(centers)
     
 
     def compute_distance(self, data, centers):

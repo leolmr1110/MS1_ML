@@ -123,7 +123,7 @@ def main(args):
         method_obj = LogisticRegression(args.lr, args.max_iters)
 
     elif args.method == "kmeans":
-        method_obj = KMeans(args.max_iters)
+        method_obj = KMeans(args.max_iters, args.centroids_init)
     
     elif args.method == "knn":
         method_obj = KNN(k=args.K, task_kind="classification")
@@ -200,6 +200,14 @@ if __name__ == "__main__":
     )
 
     # Feel free to add more arguments here if you need!
+
+    parser.add_argument(
+        "--centroids_init",
+        default="random",
+        type=str,
+        help="how to initialize centers for kmeans",
+    )
+
 
     # MS2 arguments
     parser.add_argument(

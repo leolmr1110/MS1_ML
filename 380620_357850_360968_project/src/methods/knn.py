@@ -54,4 +54,4 @@ class KNN(object):
                 predicted_label = np.mean(knn_labels)
             test_labels.append(predicted_label)
             
-        return test_labels
+        return np.array(test_labels)
